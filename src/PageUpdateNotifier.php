@@ -54,14 +54,14 @@ class PageUpdateNotifier
     public function __construct(
         string $pageClass,
         MailerInterface $mailer,
-        AppPool $apps,
+        AppPool $appPool,
         string $varDir,
         EntityManagerInterface $entityManager,
         TranslatorInterface $translator,
         Twig $twig
     ) {
         $this->mailer = $mailer;
-        $this->apps = $apps;
+        $this->apps = $appPool;
         $this->varDir = $varDir;
         $this->em = $entityManager;
         $this->translator = $translator;
