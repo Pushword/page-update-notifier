@@ -3,8 +3,10 @@
 namespace Pushword\PageUpdateNotifier;
 
 use DateInterval;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use LogicException;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -32,9 +34,12 @@ class PageUpdateNotifier
 
     private \Symfony\Contracts\Translation\TranslatorInterface $translator;
 
+    /**
+     * @var class-string<PageInterface>
+     */
     private string $pageClass;
 
-    private ?\Pushword\Core\Component\App\AppConfig $app = null;
+    private \Pushword\Core\Component\App\AppConfig $app;
 
     private Twig $twig;
 
@@ -48,6 +53,9 @@ class PageUpdateNotifier
 
     public const NOTHING_TO_NOTIFY = 4;
 
+    /**
+     * @param class-string<PageInterface> $pageClass
+     */
     public function __construct(
         string $pageClass,
         MailerInterface $mailer,
@@ -66,7 +74,7 @@ class PageUpdateNotifier
         $this->twig = $twig;
     }
 
-    public function postUpdate($page)
+    public function postUpdate($page): void
     {
         try {
             $this->run($page);
@@ -75,7 +83,7 @@ class PageUpdateNotifier
         }
     }
 
-    public function postPersist($page)
+    public function postPersist($page): void
     {
         try {
             $this->run($page);
@@ -84,7 +92,10 @@ class PageUpdateNotifier
         }
     }
 
-    protected function getPageUpdatedSince($datetime)
+    /**
+     * @return PageInterface[]
+     */
+    protected function getPageUpdatedSince(DateTimeInterface $datetime)
     {
         $pageRepo = Repository::getPageRepository($this->em, $this->pageClass);
 
@@ -95,19 +106,19 @@ class PageUpdateNotifier
 
         $pageRepo->andHost($queryBuilder, $this->app->getMainHost());
 
-        return $queryBuilder->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult(); //@phpstan-ignore-line
     }
 
-    protected function init(PageInterface $page)
+    protected function init(PageInterface $page): void
     {
         $this->app = $this->apps->get($page->getHost());
-        $this->emailFrom = (string) $this->app->get('page_update_notification_from');
-        $this->emailTo = (string) $this->app->get('page_update_notification_to');
+        $this->emailFrom = \strval($this->app->get('page_update_notification_from'));
+        $this->emailTo = \strval($this->app->get('page_update_notification_to'));
         $this->interval = $this->app->get('page_update_notification_interval');
-        $this->appName = (string) $this->app->get('name');
+        $this->appName = \strval($this->app->get('name'));
     }
 
-    protected function checkConfig($page)
+    protected function checkConfig(PageInterface $page): void
     {
         $this->init($page);
 
@@ -124,7 +135,7 @@ class PageUpdateNotifier
         }
     }
 
-    public function getCacheDir()
+    public function getCacheDir(): string
     {
         $dir = $this->varDir.'/PageUpdateNotifier';
         if (! is_dir($dir)) {
@@ -134,16 +145,17 @@ class PageUpdateNotifier
         return $dir;
     }
 
-    public function getCacheFilePath()
+    public function getCacheFilePath(): string
     {
         return $this->getCacheDir().'/lastPageUpdateNotification'.md5($this->app->getMainHost());
     }
 
+    /**
+     * @return string|int
+     */
     public function run(PageInterface $page)
     {
-        if ($error = $this->checkConfig($page)) {
-            return $error;
-        }
+        $this->checkConfig($page);
 
         $cache = $this->getCacheFilePath();
         $lastTime = new LastTime($cache);
@@ -151,9 +163,12 @@ class PageUpdateNotifier
             return self::WAS_EVER_RUN_SINCE_INTERVAL;
         }
 
-        $pages = $this->getPageUpdatedSince($lastTime->get('30 minutes ago'));
+        if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
+            throw new LogicException();
+        }
+        $pages = $this->getPageUpdatedSince($lastTime30min);
         //dd($pages);
-        if (empty($pages)) { // impossible
+        if (empty($pages)) { // @phpstan-ignore-line
             return self::NOTHING_TO_NOTIFY;
         }
 
