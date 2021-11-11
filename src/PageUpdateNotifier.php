@@ -18,14 +18,11 @@ class PageUpdateNotifier
 {
     private \Symfony\Component\Mailer\MailerInterface $mailer;
 
-    /** @var string */
-    private $emailTo;
+    private string $emailTo = '';
 
-    /** @var string */
-    private $emailFrom;
+    private string $emailFrom = '';
 
-    /** @var string */
-    private $appName;
+    private string $appName = '';
 
     private string $varDir;
 
@@ -104,21 +101,21 @@ class PageUpdateNotifier
     protected function init(PageInterface $page)
     {
         $this->app = $this->apps->get($page->getHost());
-        $this->emailFrom = $this->app->get('page_update_notification_from');
-        $this->emailTo = $this->app->get('page_update_notification_to');
+        $this->emailFrom = (string) $this->app->get('page_update_notification_from');
+        $this->emailTo = (string) $this->app->get('page_update_notification_to');
         $this->interval = $this->app->get('page_update_notification_interval');
-        $this->appName = $this->app->get('name');
+        $this->appName = (string) $this->app->get('name');
     }
 
     protected function checkConfig($page)
     {
         $this->init($page);
 
-        if (! $this->emailTo) {
+        if ('' === $this->emailTo) {
             throw new Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
-        if (! $this->emailFrom) {
+        if ('' === $this->emailFrom) {
             throw new Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
