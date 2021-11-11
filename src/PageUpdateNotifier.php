@@ -5,7 +5,6 @@ namespace Pushword\PageUpdateNotifier;
 use DateInterval;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\PageInterface;
 use Pushword\Core\Repository\Repository;
@@ -17,8 +16,7 @@ use Twig\Environment as Twig;
 
 class PageUpdateNotifier
 {
-    /** @var MailerInterface */
-    private $mailer;
+    private \Symfony\Component\Mailer\MailerInterface $mailer;
 
     /** @var string */
     private $emailTo;
@@ -29,28 +27,21 @@ class PageUpdateNotifier
     /** @var string */
     private $appName;
 
-    /** @var string */
-    private $varDir;
+    private string $varDir;
 
     private $interval;
 
-    /** @var EntityManagerInterface */
-    private $em;
+    private \Doctrine\ORM\EntityManagerInterface $em;
 
-    /** @var TranslatorInterface */
-    private $translator;
+    private \Symfony\Contracts\Translation\TranslatorInterface $translator;
 
-    /** @var string */
-    private $pageClass;
+    private string $pageClass;
 
-    /** @var AppConfig */
-    private $app;
+    private ?\Pushword\Core\Component\App\AppConfig $app = null;
 
-    /** @var Twig */
-    private $twig;
+    private Twig $twig;
 
-    /** @var AppPool */
-    private $apps;
+    private \Pushword\Core\Component\App\AppPool $apps;
 
     public const ERROR_NO_EMAIL = 1;
 
