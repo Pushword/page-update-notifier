@@ -101,7 +101,7 @@ class PageUpdateNotifier
 
         $queryBuilder = $pageRepo->createQueryBuilder('p')
             ->andWhere('p.createdAt > :lastTime OR p.updatedAt > :lastTime')
-            ->setParameter('lastTime', $datetime)
+            ->setParameter('lastTime', $datetime, 'datetime')
             ->orderBy('p.createdAt', 'ASC');
 
         $pageRepo->andHost($queryBuilder, $this->app->getMainHost());
