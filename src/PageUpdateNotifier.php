@@ -131,7 +131,7 @@ class PageUpdateNotifier
     {
         $dir = $this->varDir.'/PageUpdateNotifier';
         if (! is_dir($dir)) {
-            mkdir($dir);
+            \Safe\mkdir($dir);
         }
 
         return $dir;
