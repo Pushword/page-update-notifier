@@ -90,8 +90,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (Exception $e) {
-            // todo log exception
+        } catch (Exception $exception) {
         }
     }
 
@@ -178,6 +177,7 @@ class PageUpdateNotifier
         if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
             throw new LogicException();
         }
+
         $pages = $this->getPageUpdatedSince($lastTime30min);
         //dd($pages);
         if (empty($pages)) { // @phpstan-ignore-line
