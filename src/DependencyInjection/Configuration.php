@@ -16,6 +16,9 @@ class Configuration implements ConfigurationInterface
         'page_update_notification_interval',
     ];
 
+    /**
+     * @return \Symfony\Component\Config\Definition\Builder\TreeBuilder
+     */
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder('pushword_page_update_notifier');
