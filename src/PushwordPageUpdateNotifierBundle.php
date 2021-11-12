@@ -7,10 +7,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class PushwordPageUpdateNotifierBundle extends Bundle
 {
-    /**
-     * @return \Pushword\PageUpdateNotifier\DependencyInjection\PageUpdateNotifierExtension|null
-     */
-    public function getContainerExtension()
+    public function getContainerExtension(): ?PageUpdateNotifierExtension
     {
         if (null === $this->extension) {
             $this->extension = new PageUpdateNotifierExtension();
