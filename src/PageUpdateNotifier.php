@@ -86,7 +86,7 @@ class PageUpdateNotifier
         $this->twig = $twig;
     }
 
-    public function postUpdate($page): void
+    public function postUpdate(PageInterface $page): void
     {
         try {
             $this->run($page);
@@ -94,7 +94,7 @@ class PageUpdateNotifier
         }
     }
 
-    public function postPersist($page): void
+    public function postPersist(PageInterface $page): void
     {
         try {
             $this->run($page);
