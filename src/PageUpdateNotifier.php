@@ -28,7 +28,7 @@ class PageUpdateNotifier
 
     private string $varDir;
 
-    private $interval;
+    private string $interval = '';
 
     private \Doctrine\ORM\EntityManagerInterface $em;
 
@@ -141,7 +141,7 @@ class PageUpdateNotifier
             throw new Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
-        if (! $this->interval) {
+        if ('' === $this->interval) {
             throw new Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
         }
     }
