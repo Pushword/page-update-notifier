@@ -45,12 +45,24 @@ class PageUpdateNotifier
 
     private \Pushword\Core\Component\App\AppPool $apps;
 
+    /**
+     * @var int
+     */
     public const ERROR_NO_EMAIL = 1;
 
+    /**
+     * @var int
+     */
     public const ERROR_NO_INTERVAL = 2;
 
+    /**
+     * @var int
+     */
     public const WAS_EVER_RUN_SINCE_INTERVAL = 3;
 
+    /**
+     * @var int
+     */
     public const NOTHING_TO_NOTIFY = 4;
 
     /**

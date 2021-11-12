@@ -7,6 +7,9 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var string[]
+     */
     public const DEFAULT_APP_FALLBACK = [
         'page_update_notification_from',
         'page_update_notification_to',
