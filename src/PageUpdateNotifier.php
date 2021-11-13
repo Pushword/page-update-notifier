@@ -125,7 +125,7 @@ class PageUpdateNotifier
         $this->app = $this->apps->get($page->getHost());
         $this->emailFrom = \strval($this->app->get('page_update_notification_from'));
         $this->emailTo = \strval($this->app->get('page_update_notification_to'));
-        $this->interval = $this->app->get('page_update_notification_interval');
+        $this->interval = \strval($this->app->get('page_update_notification_interval'));
         $this->appName = \strval($this->app->get('name'));
     }
 
@@ -180,7 +180,7 @@ class PageUpdateNotifier
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
         //dd($pages);
-        if ([] === $pages) { // @phpstan-ignore-line
+        if ([] === $pages) {
             return self::NOTHING_TO_NOTIFY;
         }
 
