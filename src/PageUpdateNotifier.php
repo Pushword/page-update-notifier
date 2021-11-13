@@ -180,7 +180,7 @@ class PageUpdateNotifier
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
         //dd($pages);
-        if (empty($pages)) { // @phpstan-ignore-line
+        if ([] === $pages) { // @phpstan-ignore-line
             return self::NOTHING_TO_NOTIFY;
         }
 
