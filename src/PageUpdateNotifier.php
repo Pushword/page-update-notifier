@@ -86,11 +86,7 @@ class PageUpdateNotifier
         $this->twig = $twig;
     }
 
-<<<<<<< HEAD
     public function postUpdate(PageInterface $page): void
-=======
-    public function postUpdate($page): void
->>>>>>> 054dd57 (...)
     {
         try {
             $this->run($page);
@@ -98,11 +94,7 @@ class PageUpdateNotifier
         }
     }
 
-<<<<<<< HEAD
     public function postPersist(PageInterface $page): void
-=======
-    public function postPersist($page): void
->>>>>>> 054dd57 (...)
     {
         try {
             $this->run($page);
@@ -133,11 +125,7 @@ class PageUpdateNotifier
         $this->app = $this->apps->get($page->getHost());
         $this->emailFrom = \strval($this->app->get('page_update_notification_from'));
         $this->emailTo = \strval($this->app->get('page_update_notification_to'));
-<<<<<<< HEAD
         $this->interval = \strval($this->app->get('page_update_notification_interval'));
-=======
-        $this->interval = $this->app->get('page_update_notification_interval');
->>>>>>> 054dd57 (...)
         $this->appName = \strval($this->app->get('name'));
     }
 
@@ -189,16 +177,10 @@ class PageUpdateNotifier
         if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
             throw new LogicException();
         }
-<<<<<<< HEAD
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
         //dd($pages);
         if ([] === $pages) {
-=======
-        $pages = $this->getPageUpdatedSince($lastTime30min);
-        //dd($pages);
-        if (empty($pages)) { // @phpstan-ignore-line
->>>>>>> 054dd57 (...)
             return self::NOTHING_TO_NOTIFY;
         }
 
