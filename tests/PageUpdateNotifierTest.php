@@ -2,10 +2,9 @@
 
 namespace Pushword\PageUpdateNotifier\Tests;
 
-use App\Entity\Page;
 use Nette\Utils\FileSystem;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\SharedTrait\CustomPropertiesTrait;
+use Pushword\Core\Entity\Page;
 use Pushword\PageUpdateNotifier\PageUpdateNotifier;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Mailer\Mailer;
@@ -26,7 +25,6 @@ class PageUpdateNotifierTest extends KernelTestCase
         $mailer = new Mailer($this->getTransporter());
 
         return new PageUpdateNotifier(
-            'App\Entity\Page',
             $mailer,
             $apps,
             sys_get_temp_dir(),
@@ -69,17 +67,6 @@ class PageUpdateNotifierTest extends KernelTestCase
         $this->assertSame(PageUpdateNotifier::WAS_EVER_RUN_SINCE_INTERVAL, $notifier->run($this->getPage()));
 
         return;
-    }
-
-    /**
-     * @return CustomPropertiesTrait
-     */
-    protected function getCustomPropertiesTrait()
-    {
-        $mock = $this->getMockForTrait(CustomPropertiesTrait::class);
-        // $mock->method('getTitle')->willReturn(true);
-
-        return $mock;
     }
 
     /**

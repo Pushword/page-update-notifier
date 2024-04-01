@@ -6,8 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\PageInterface;
-use Pushword\Core\Repository\Repository;
+use Pushword\Core\Entity\Page;
 use Pushword\Core\Utils\LastTime;
 
 use function Safe\mkdir;
@@ -27,6 +26,7 @@ class PageUpdateNotifier
 
     private string $interval = '';
 
+    /** @psalm-suppress PropertyNotSetInConstructor */
     private AppConfig $app;
 
     /**
@@ -49,11 +49,7 @@ class PageUpdateNotifier
      */
     final public const NOTHING_TO_NOTIFY = 4;
 
-    /**
-     * @param class-string<PageInterface> $pageClass
-     */
     public function __construct(
-        private readonly string $pageClass,
         private readonly MailerInterface $mailer,
         private readonly AppPool $apps,
         private readonly string $varDir,
@@ -64,7 +60,7 @@ class PageUpdateNotifier
     ) {
     }
 
-    public function postUpdate(PageInterface $page): void
+    public function postUpdate(Page $page): void
     {
         try {
             $this->run($page);
@@ -73,7 +69,7 @@ class PageUpdateNotifier
         }
     }
 
-    public function postPersist(PageInterface $page): void
+    public function postPersist(Page $page): void
     {
         try {
             $this->run($page);
@@ -83,11 +79,13 @@ class PageUpdateNotifier
     }
 
     /**
-     * @return PageInterface[]
+     * @return Page[]
+     *
+     * @psalm-suppress all
      */
     protected function getPageUpdatedSince(\DateTimeInterface $datetime)
     {
-        $pageRepo = Repository::getPageRepository($this->em, $this->pageClass);
+        $pageRepo = $this->em->getRepository(Page::class);
 
         $queryBuilder = $pageRepo->createQueryBuilder('p')
             ->andWhere('p.createdAt > :lastTime OR p.updatedAt > :lastTime')
@@ -96,10 +94,10 @@ class PageUpdateNotifier
 
         $pageRepo->andHost($queryBuilder, $this->app->getMainHost());
 
-        return $queryBuilder->getQuery()->getResult();  // @phpstan-ignore-line
+        return $queryBuilder->getQuery()->getResult();
     }
 
-    protected function init(PageInterface $page): void
+    protected function init(Page $page): void
     {
         $this->app = $this->apps->get($page->getHost());
         $this->emailFrom = \strval($this->app->getStr('page_update_notification_from'));
@@ -108,7 +106,7 @@ class PageUpdateNotifier
         $this->appName = \strval($this->app->getStr('name'));
     }
 
-    protected function checkConfig(PageInterface $page): void
+    protected function checkConfig(Page $page): void
     {
         $this->init($page);
 
@@ -140,7 +138,7 @@ class PageUpdateNotifier
         return $this->getCacheDir().'/lastPageUpdateNotification'; // .md5($this->app->getMainHost())
     }
 
-    public function run(PageInterface $page): int|string
+    public function run(Page $page): int|string
     {
         $this->checkConfig($page);
 
