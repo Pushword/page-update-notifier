@@ -2,15 +2,12 @@
 
 namespace Pushword\PageUpdateNotifier;
 
-use DateInterval;
-use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Exception;
-use LogicException;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
-use Pushword\Core\Entity\Page;
+use Pushword\Core\Entity\PageInterface;
+use Pushword\Core\Repository\Repository;
 use Pushword\Core\Utils\LastTime;
 
 use function Safe\mkdir;
@@ -30,7 +27,6 @@ class PageUpdateNotifier
 
     private string $interval = '';
 
-    /** @psalm-suppress PropertyNotSetInConstructor */
     private AppConfig $app;
 
     /**
@@ -53,7 +49,11 @@ class PageUpdateNotifier
      */
     final public const NOTHING_TO_NOTIFY = 4;
 
+    /**
+     * @param class-string<PageInterface> $pageClass
+     */
     public function __construct(
+        private readonly string $pageClass,
         private readonly MailerInterface $mailer,
         private readonly AppPool $apps,
         private readonly string $varDir,
@@ -64,32 +64,30 @@ class PageUpdateNotifier
     ) {
     }
 
-    public function postUpdate(Page $page): void
+    public function postUpdate(PageInterface $page): void
     {
         try {
             $this->run($page);
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             $this->logger?->info('[PageUpdateNotifier] '.$exception->getMessage());
         }
     }
 
-    public function postPersist(Page $page): void
+    public function postPersist(PageInterface $page): void
     {
         try {
             $this->run($page);
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             $this->logger?->info('[PageUpdateNotifier] '.$exception->getMessage());
         }
     }
 
     /**
-     * @return Page[]
-     *
-     * @psalm-suppress all
+     * @return PageInterface[]
      */
-    protected function getPageUpdatedSince(DateTimeInterface $datetime)
+    protected function getPageUpdatedSince(\DateTimeInterface $datetime)
     {
-        $pageRepo = $this->em->getRepository(Page::class);
+        $pageRepo = Repository::getPageRepository($this->em, $this->pageClass);
 
         $queryBuilder = $pageRepo->createQueryBuilder('p')
             ->andWhere('p.createdAt > :lastTime OR p.updatedAt > :lastTime')
@@ -98,10 +96,10 @@ class PageUpdateNotifier
 
         $pageRepo->andHost($queryBuilder, $this->app->getMainHost());
 
-        return $queryBuilder->getQuery()->getResult();
+        return $queryBuilder->getQuery()->getResult();  // @phpstan-ignore-line
     }
 
-    protected function init(Page $page): void
+    protected function init(PageInterface $page): void
     {
         $this->app = $this->apps->get($page->getHost());
         $this->emailFrom = \strval($this->app->getStr('page_update_notification_from'));
@@ -110,20 +108,20 @@ class PageUpdateNotifier
         $this->appName = \strval($this->app->getStr('name'));
     }
 
-    protected function checkConfig(Page $page): void
+    protected function checkConfig(PageInterface $page): void
     {
         $this->init($page);
 
         if ('' === $this->emailTo) {
-            throw new Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new \Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
         if ('' === $this->emailFrom) {
-            throw new Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new \Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
         if ('' === $this->interval) {
-            throw new Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
+            throw new \Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
         }
     }
 
@@ -142,20 +140,20 @@ class PageUpdateNotifier
         return $this->getCacheDir().'/lastPageUpdateNotification'; // .md5($this->app->getMainHost())
     }
 
-    public function run(Page $page): int|string
+    public function run(PageInterface $page): int|string
     {
         $this->checkConfig($page);
 
         $cache = $this->getCacheFilePath();
         $lastTime = new LastTime($cache);
-        if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
+        if ($lastTime->wasRunSince(new \DateInterval($this->interval))) {
             $this->logger?->info('[PageUpdateNotifier] was ever run since interval');
 
             return self::WAS_EVER_RUN_SINCE_INTERVAL;
         }
 
         if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
-            throw new LogicException();
+            throw new \LogicException();
         }
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
