@@ -2,6 +2,8 @@
 
 namespace Pushword\PageUpdateNotifier\Tests;
 
+use DateTime;
+use Error;
 use Nette\Utils\FileSystem;
 use Pushword\Core\Component\App\AppPool;
 use Pushword\Core\Entity\Page;
@@ -14,14 +16,14 @@ use Symfony\Component\Validator\Violation\ConstraintViolationBuilderInterface;
 
 class PageUpdateNotifierTest extends KernelTestCase
 {
-    protected function getNotifier()
+    protected function getNotifier(): PageUpdateNotifier
     {
         self::bootKernel();
 
-        $entityManager = self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager');
+        $entityManager = self::getContainer()->get('doctrine.orm.default_entity_manager');
         $apps = $this->getApps();
-        $translator = self::$kernel->getContainer()->get('translator');
-        $twig = self::$kernel->getContainer()->get('test.service_container')->get('twig');
+        $translator = self::getContainer()->get('translator');
+        $twig = self::getContainer()->get('twig');
         $mailer = new Mailer($this->getTransporter());
 
         return new PageUpdateNotifier(
@@ -36,20 +38,20 @@ class PageUpdateNotifierTest extends KernelTestCase
 
     protected function getApps(): AppPool
     {
-        return self::$kernel->getContainer()->get(AppPool::class);
+        return self::getContainer()->get(AppPool::class);
     }
 
-    protected function getPage()
+    protected function getPage(): Page
     {
         return (new Page())
             ->setSlug('page-updater')
             ->setTitle('Just created')
-            ->setCreatedAt(new \DateTime())
+            ->setCreatedAt(new DateTime())
             ->setLocale('en')
             ->setHost('localhost.dev');
     }
 
-    public function testRun()
+    public function testRun(): void
     {
         $notifier = $this->getNotifier();
         $this->getApps()->get()->setCustomProperty('page_update_notification_from', 'contact@example.tld');
@@ -57,14 +59,14 @@ class PageUpdateNotifierTest extends KernelTestCase
         $this->getApps()->get()->setCustomProperty('page_update_notification_interval', 'P1D');
 
         FileSystem::delete($notifier->getCacheDir());
-        $this->assertSame(PageUpdateNotifier::NOTHING_TO_NOTIFY, $notifier->run($this->getPage()));
+        self::assertSame(PageUpdateNotifier::NOTHING_TO_NOTIFY, $notifier->run($this->getPage()));
 
-        self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager')->persist($this->getPage());
-        self::$kernel->getContainer()->get('doctrine.orm.default_entity_manager')->flush();
+        self::getContainer()->get('doctrine.orm.default_entity_manager')->persist($this->getPage());
+        self::getContainer()->get('doctrine.orm.default_entity_manager')->flush();
 
-        $this->assertSame('Notification sent', $notifier->run($this->getPage()));
+        self::assertSame('Notification sent', $notifier->run($this->getPage()));
 
-        $this->assertSame(PageUpdateNotifier::WAS_EVER_RUN_SINCE_INTERVAL, $notifier->run($this->getPage()));
+        self::assertSame(PageUpdateNotifier::WAS_EVER_RUN_SINCE_INTERVAL, $notifier->run($this->getPage()));
 
         return;
     }
@@ -90,12 +92,12 @@ class PageUpdateNotifierTest extends KernelTestCase
         $mockConstraintViolationBuilder->method('addViolation')->willReturnSelf();
 
         $mock = $this->createMock(ExecutionContextInterface::class);
-        $mock->method('buildViolation')->willReturnCallback(function ($arg) use ($mockConstraintViolationBuilder) {
-            if (\in_array($arg, ['page.customProperties.malformed', 'page.customProperties.notStandAlone'])) {
-                new \Error();
-            } else {
-                return $mockConstraintViolationBuilder;
+        $mock->method('buildViolation')->willReturnCallback(static function ($arg) use ($mockConstraintViolationBuilder) {
+            if (\in_array($arg, ['page.customProperties.malformed', 'page.customProperties.notStandAlone'], true)) {
+                throw new Error();
             }
+
+            return $mockConstraintViolationBuilder;
         });
 
         return $mock;
