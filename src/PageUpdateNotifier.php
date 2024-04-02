@@ -2,7 +2,11 @@
 
 namespace Pushword\PageUpdateNotifier;
 
+use DateInterval;
+use DateTimeInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Pushword\Core\Component\App\AppConfig;
 use Pushword\Core\Component\App\AppPool;
@@ -64,7 +68,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->logger?->info('[PageUpdateNotifier] '.$exception->getMessage());
         }
     }
@@ -73,7 +77,7 @@ class PageUpdateNotifier
     {
         try {
             $this->run($page);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $this->logger?->info('[PageUpdateNotifier] '.$exception->getMessage());
         }
     }
@@ -83,7 +87,7 @@ class PageUpdateNotifier
      *
      * @psalm-suppress all
      */
-    protected function getPageUpdatedSince(\DateTimeInterface $datetime)
+    protected function getPageUpdatedSince(DateTimeInterface $datetime)
     {
         $pageRepo = $this->em->getRepository(Page::class);
 
@@ -111,15 +115,15 @@ class PageUpdateNotifier
         $this->init($page);
 
         if ('' === $this->emailTo) {
-            throw new \Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new Exception('`page_update_notification_from` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
         if ('' === $this->emailFrom) {
-            throw new \Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
+            throw new Exception('`page_update_notification_to` must be set to use this extension.', self::ERROR_NO_EMAIL);
         }
 
         if ('' === $this->interval) {
-            throw new \Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
+            throw new Exception('`page_update_notification_interval` must be set to use this extension.', self::ERROR_NO_INTERVAL);
         }
     }
 
@@ -144,14 +148,14 @@ class PageUpdateNotifier
 
         $cache = $this->getCacheFilePath();
         $lastTime = new LastTime($cache);
-        if ($lastTime->wasRunSince(new \DateInterval($this->interval))) {
+        if ($lastTime->wasRunSince(new DateInterval($this->interval))) {
             $this->logger?->info('[PageUpdateNotifier] was ever run since interval');
 
             return self::WAS_EVER_RUN_SINCE_INTERVAL;
         }
 
         if (($lastTime30min = $lastTime->get('30 minutes ago')) === null) {
-            throw new \LogicException();
+            throw new LogicException();
         }
 
         $pages = $this->getPageUpdatedSince($lastTime30min);
